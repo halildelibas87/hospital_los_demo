@@ -1,29 +1,33 @@
-import json
 import joblib
 import pandas as pd
 import streamlit as st
 
 
-MODEL_PATH = "model/los_model.pkl"
-MODEL_INFO_PATH = "model/model_info.pkl"
-METRICS_PATH = "model/metrics.json"
+LOS_MODEL_PATH = "model/los_model.pkl"
+LOS_MODEL_INFO_PATH = "model/los_model_info.pkl"
+
+BILLING_MODEL_PATH = "model/billing_model.pkl"
+BILLING_MODEL_INFO_PATH = "model/billing_model_info.pkl"
 
 
 @st.cache_resource
 def load_model_assets():
-    model = joblib.load(MODEL_PATH)
-    model_info = joblib.load(MODEL_INFO_PATH)
+    """
+    Load both trained models and their metadata.
+    """
+    los_model = joblib.load(LOS_MODEL_PATH)
+    los_model_info = joblib.load(LOS_MODEL_INFO_PATH)
 
-    try:
-        with open(METRICS_PATH, "r", encoding="utf-8") as f:
-            metrics = json.load(f)
-    except FileNotFoundError:
-        metrics = None
+    billing_model = joblib.load(BILLING_MODEL_PATH)
+    billing_model_info = joblib.load(BILLING_MODEL_INFO_PATH)
 
-    return model, model_info, metrics
+    return los_model, los_model_info, billing_model, billing_model_info
 
 
 def get_stay_band(pred_days, short_threshold=3, medium_threshold=7):
+    """
+    Convert LOS prediction into a simple category.
+    """
     if pred_days <= short_threshold:
         return "Short Stay", "Expected to stay for a short period."
     elif pred_days <= medium_threshold:
@@ -31,34 +35,58 @@ def get_stay_band(pred_days, short_threshold=3, medium_threshold=7):
     return "Long Stay", "Expected to require a longer hospital stay."
 
 
+def build_input_dataframe(
+    age,
+    gender,
+    blood_type,
+    medical_condition,
+    insurance_provider,
+    admission_type,
+    medication,
+    test_results,
+):
+    """
+    Create a single-row dataframe for model inference.
+    """
+    input_df = pd.DataFrame(
+        [
+            {
+                "Age": age,
+                "Gender": gender,
+                "Blood Type": blood_type,
+                "Medical Condition": medical_condition,
+                "Insurance Provider": insurance_provider,
+                "Admission Type": admission_type,
+                "Medication": medication,
+                "Test Results": test_results,
+            }
+        ]
+    )
+
+    return input_df
+
+
 def main():
     st.set_page_config(
-        page_title="Patient Length of Stay Prediction",
+        page_title="Patient Stay & Billing Estimator",
         page_icon="🏥",
         layout="centered",
     )
 
-    st.title("🏥 Patient Length of Stay Prediction")
-    st.caption("This demo estimates expected hospital stay duration based on patient admission details.")
-    st.info("This tool is for decision support and demo purposes only. It does not replace clinical judgment.")
+    st.title("🏥 Patient Stay & Billing Estimator")
+    st.caption(
+        "This application estimates hospital length of stay and billing amount using patient admission information."
+    )
+
+    st.info(
+        "This tool is for demo and decision-support purposes only. It does not replace medical or financial judgment."
+    )
 
     try:
-        model, model_info, metrics = load_model_assets()
+        los_model, los_model_info, billing_model, billing_model_info = load_model_assets()
     except Exception as e:
-        st.error(f"Model yüklenemedi: {e}")
+        st.error(f"Model dosyaları yüklenemedi: {e}")
         st.stop()
-
-    with st.expander("Model Performance"):
-        if metrics:
-            col1, col2, col3 = st.columns(3)
-            col1.metric("Test MAE", metrics["test"]["mae"])
-            col2.metric("Test RMSE", metrics["test"]["rmse"])
-            col3.metric("Test R²", metrics["test"]["r2"])
-
-            st.write("Baseline test metrics:")
-            st.json(metrics["baseline_test"])
-        else:
-            st.write("Henüz metrik bulunamadı.")
 
     st.subheader("Patient Information")
 
@@ -66,7 +94,10 @@ def main():
         age = st.number_input("Age", min_value=0, max_value=120, value=45, step=1)
 
         gender = st.selectbox("Gender", ["Male", "Female"])
-        blood_type = st.selectbox("Blood Type", ["A+", "A-", "B+", "B-", "AB+", "AB-", "O+", "O-"])
+        blood_type = st.selectbox(
+            "Blood Type",
+            ["A+", "A-", "B+", "B-", "AB+", "AB-", "O+", "O-"],
+        )
         medical_condition = st.selectbox(
             "Medical Condition",
             ["Arthritis", "Asthma", "Cancer", "Diabetes", "Hypertension", "Obesity"],
@@ -88,48 +119,48 @@ def main():
             ["Normal", "Abnormal", "Inconclusive"],
         )
 
-        submitted = st.form_submit_button("Predict Length of Stay")
+        submitted = st.form_submit_button("Estimate")
 
     if submitted:
-        input_df = pd.DataFrame(
-            [
-                {
-                    "Age": age,
-                    "Gender": gender,
-                    "Blood Type": blood_type,
-                    "Medical Condition": medical_condition,
-                    "Insurance Provider": insurance_provider,
-                    "Admission Type": admission_type,
-                    "Medication": medication,
-                    "Test Results": test_results,
-                }
-            ]
+        input_df = build_input_dataframe(
+            age=age,
+            gender=gender,
+            blood_type=blood_type,
+            medical_condition=medical_condition,
+            insurance_provider=insurance_provider,
+            admission_type=admission_type,
+            medication=medication,
+            test_results=test_results,
         )
 
-        prediction = model.predict(input_df)[0]
-        prediction = max(0, round(float(prediction), 1))
+        with st.spinner("Calculating estimates..."):
+            los_prediction = los_model.predict(input_df)[0]
+            billing_prediction = billing_model.predict(input_df)[0]
 
-        short_threshold = model_info.get("short_stay_threshold", 3)
-        medium_threshold = model_info.get("medium_stay_threshold", 7)
-        band, explanation = get_stay_band(prediction, short_threshold, medium_threshold)
+        los_prediction = max(0, round(float(los_prediction), 1))
+        billing_prediction = max(0, round(float(billing_prediction), 2))
 
-        st.success(f"Estimated Length of Stay: {prediction} days")
+        short_threshold = los_model_info.get("short_stay_threshold", 3)
+        medium_threshold = los_model_info.get("medium_stay_threshold", 7)
 
-        if band == "Short Stay":
-            st.info(f"Category: {band}\n\n{explanation}")
-        elif band == "Medium Stay":
-            st.warning(f"Category: {band}\n\n{explanation}")
+        stay_band, stay_explanation = get_stay_band(
+            los_prediction,
+            short_threshold=short_threshold,
+            medium_threshold=medium_threshold,
+        )
+
+        st.success(f"Estimated Length of Stay: {los_prediction} days")
+        st.success(f"Estimated Billing Amount: ${billing_prediction:,.2f}")
+
+        if stay_band == "Short Stay":
+            st.info(f"Stay Category: {stay_band} | {stay_explanation}")
+        elif stay_band == "Medium Stay":
+            st.warning(f"Stay Category: {stay_band} | {stay_explanation}")
         else:
-            st.error(f"Category: {band}\n\n{explanation}")
+            st.error(f"Stay Category: {stay_band} | {stay_explanation}")
 
-        st.subheader("Input Summary")
+        st.subheader("Submitted Information")
         st.dataframe(input_df, use_container_width=True)
-
-        st.subheader("Operational Note")
-        st.write(
-            f"This patient is predicted to stay approximately **{prediction} days**. "
-            f"This estimate can support bed planning, staffing, and patient flow management."
-        )
 
 
 if __name__ == "__main__":

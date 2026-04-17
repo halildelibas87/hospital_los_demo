@@ -6,7 +6,8 @@ import numpy as np
 import pandas as pd
 
 from sklearn.compose import ColumnTransformer
-from sklearn.ensemble import RandomForestRegressor
+from sklearn.ensemble import RandomForestRegressor, GradientBoostingRegressor
+from sklearn.linear_model import LinearRegression, Ridge
 from sklearn.impute import SimpleImputer
 from sklearn.metrics import mean_absolute_error, mean_squared_error, r2_score
 from sklearn.model_selection import train_test_split
@@ -14,15 +15,53 @@ from sklearn.pipeline import Pipeline
 from sklearn.preprocessing import OneHotEncoder
 
 
+# =========================
+# PATH CONFIGURATION
+# =========================
 DATA_PATH = "data/healthcare_dataset.csv"
 MODEL_DIR = "model"
-MODEL_PATH = os.path.join(MODEL_DIR, "los_model.pkl")
-MODEL_INFO_PATH = os.path.join(MODEL_DIR, "model_info.pkl")
-METRICS_PATH = os.path.join(MODEL_DIR, "metrics.json")
+
+LOS_MODEL_PATH = os.path.join(MODEL_DIR, "los_model.pkl")
+LOS_MODEL_INFO_PATH = os.path.join(MODEL_DIR, "los_model_info.pkl")
+LOS_METRICS_PATH = os.path.join(MODEL_DIR, "los_metrics.json")
+
+BILLING_MODEL_PATH = os.path.join(MODEL_DIR, "billing_model.pkl")
+BILLING_MODEL_INFO_PATH = os.path.join(MODEL_DIR, "billing_model_info.pkl")
+BILLING_METRICS_PATH = os.path.join(MODEL_DIR, "billing_metrics.json")
 
 
+# =========================
+# FEATURE CONFIGURATION
+# =========================
+FEATURE_COLUMNS = [
+    "Age",
+    "Gender",
+    "Blood Type",
+    "Medical Condition",
+    "Insurance Provider",
+    "Admission Type",
+    "Medication",
+    "Test Results",
+]
+
+NUMERIC_FEATURES = ["Age"]
+
+CATEGORICAL_FEATURES = [
+    "Gender",
+    "Blood Type",
+    "Medical Condition",
+    "Insurance Provider",
+    "Admission Type",
+    "Medication",
+    "Test Results",
+]
+
+
+# =========================
+# DATA LOADING & CLEANING
+# =========================
 def clean_text(value):
-    """Normalize text fields safely."""
+    """Standardize text values safely."""
     if pd.isna(value):
         return np.nan
     value = str(value).strip()
@@ -31,9 +70,8 @@ def clean_text(value):
 
 
 def load_data(path):
+    """Load raw CSV and validate expected columns."""
     df = pd.read_csv(path)
-
-    # Standardize column names just in case
     df.columns = [col.strip() for col in df.columns]
 
     expected_columns = [
@@ -54,14 +92,18 @@ def load_data(path):
         "Test Results",
     ]
 
-    missing_cols = [col for col in expected_columns if col not in df.columns]
-    if missing_cols:
-        raise ValueError(f"CSV içinde eksik sütunlar var: {missing_cols}")
+    missing_columns = [col for col in expected_columns if col not in df.columns]
+    if missing_columns:
+        raise ValueError(f"Eksik sütunlar var: {missing_columns}")
 
     return df
 
 
 def preprocess_dataframe(df):
+    """
+    Clean raw dataframe and create model-ready target columns.
+    This function is shared infrastructure for future LOS + Billing models.
+    """
     df = df.copy()
 
     text_columns = [
@@ -87,28 +129,31 @@ def preprocess_dataframe(df):
     df["Billing Amount"] = pd.to_numeric(df["Billing Amount"], errors="coerce")
     df["Room Number"] = pd.to_numeric(df["Room Number"], errors="coerce")
 
-    # Target variable
-    df["length_of_stay"] = (df["Discharge Date"] - df["Date of Admission"]).dt.days
+    # Create target for current project
+    df["length_of_stay"] = (
+        df["Discharge Date"] - df["Date of Admission"]
+    ).dt.days
 
-    # Remove invalid rows
-    df = df.dropna(subset=["Age", "Date of Admission", "Discharge Date", "length_of_stay"])
+    # Keep only valid rows
+    df = df.dropna(
+        subset=[
+            "Age",
+            "Date of Admission",
+            "Discharge Date",
+            "length_of_stay",
+        ]
+    )
+
     df = df[df["length_of_stay"] >= 0].copy()
 
     return df
 
 
-def build_model():
-    numeric_features = ["Age"]
-    categorical_features = [
-        "Gender",
-        "Blood Type",
-        "Medical Condition",
-        "Insurance Provider",
-        "Admission Type",
-        "Medication",
-        "Test Results",
-    ]
-
+# =========================
+# MODEL BUILDING
+# =========================
+def build_preprocessor():
+    """Build shared preprocessing pipeline."""
     numeric_transformer = Pipeline(
         steps=[
             ("imputer", SimpleImputer(strategy="median")),
@@ -124,32 +169,60 @@ def build_model():
 
     preprocessor = ColumnTransformer(
         transformers=[
-            ("num", numeric_transformer, numeric_features),
-            ("cat", categorical_transformer, categorical_features),
+            ("num", numeric_transformer, NUMERIC_FEATURES),
+            ("cat", categorical_transformer, CATEGORICAL_FEATURES),
         ]
     )
+
+    return preprocessor
+
+
+def get_candidate_models():
+    """
+    Candidate regression models to compare.
+    We keep the list compact and interpretable for now.
+    """
+    return {
+        "linear_regression": LinearRegression(),
+        "ridge": Ridge(alpha=1.0),
+        "random_forest": RandomForestRegressor(
+            n_estimators=200,
+            max_depth=10,
+            min_samples_split=10,
+            min_samples_leaf=5,
+            random_state=42,
+            n_jobs=-1,
+        ),
+        "gradient_boosting": GradientBoostingRegressor(
+            n_estimators=200,
+            learning_rate=0.05,
+            max_depth=3,
+            min_samples_split=10,
+            min_samples_leaf=5,
+            random_state=42,
+        ),
+    }
+
+
+def build_pipeline_with_model(regressor):
+    """Build a full preprocessing + model pipeline."""
+    preprocessor = build_preprocessor()
 
     model = Pipeline(
         steps=[
             ("preprocessor", preprocessor),
-            (
-                "regressor",
-                RandomForestRegressor(
-                    n_estimators=300,
-                    max_depth=None,
-                    min_samples_split=4,
-                    min_samples_leaf=2,
-                    random_state=42,
-                    n_jobs=-1,
-                ),
-            ),
+            ("regressor", regressor),
         ]
     )
 
-    return model, numeric_features, categorical_features
+    return model
 
 
-def evaluate_model(y_true, y_pred):
+# =========================
+# EVALUATION
+# =========================
+def evaluate_regression(y_true, y_pred):
+    """Return standard regression metrics."""
     mae = mean_absolute_error(y_true, y_pred)
     rmse = np.sqrt(mean_squared_error(y_true, y_pred))
     r2 = r2_score(y_true, y_pred)
@@ -160,35 +233,29 @@ def evaluate_model(y_true, y_pred):
         "r2": round(float(r2), 4),
     }
 
+def calculate_overfit_gap(train_metrics, test_metrics):
+    """
+    Simple overfitting indicator based on R² gap.
+    Higher gap means the model fits train much better than test.
+    """
+    return round(train_metrics["r2"] - test_metrics["r2"], 4)
 
-def baseline_metrics(y_true, baseline_value):
-    baseline_pred = np.full(shape=len(y_true), fill_value=baseline_value)
-    return evaluate_model(y_true, baseline_pred)
+def evaluate_baseline(y_true, baseline_value):
+    """Compare model against simple mean baseline."""
+    baseline_predictions = np.full(len(y_true), baseline_value)
+    return evaluate_regression(y_true, baseline_predictions)
 
 
-def main():
-    os.makedirs(MODEL_DIR, exist_ok=True)
-
-    print("Veri yükleniyor...")
-    df = load_data(DATA_PATH)
-    df = preprocess_dataframe(df)
-
-    print(f"Temizlenmiş veri boyutu: {df.shape}")
-
-    feature_columns = [
-        "Age",
-        "Gender",
-        "Blood Type",
-        "Medical Condition",
-        "Insurance Provider",
-        "Admission Type",
-        "Medication",
-        "Test Results",
-    ]
-    target_column = "length_of_stay"
-
-    X = df[feature_columns].copy()
-    y = df[target_column].copy()
+# =========================
+# TRAINING FUNCTIONS
+# =========================
+def train_length_of_stay_model(df):
+    """
+    Train and compare multiple candidate models for LOS.
+    Select the best model primarily by test MAE, while also inspecting overfit gap.
+    """
+    X = df[FEATURE_COLUMNS].copy()
+    y = df["length_of_stay"].copy()
 
     X_train, X_test, y_train, y_test = train_test_split(
         X,
@@ -198,23 +265,44 @@ def main():
     )
 
     baseline_value = y_train.mean()
-    baseline_result = baseline_metrics(y_test, baseline_value)
+    baseline_metrics = evaluate_baseline(y_test, baseline_value)
 
-    model, numeric_features, categorical_features = build_model()
+    candidate_models = get_candidate_models()
+    model_results = {}
 
-    print("Model eğitiliyor...")
-    model.fit(X_train, y_train)
+    best_model_name = None
+    best_model_pipeline = None
+    best_test_mae = float("inf")
 
-    train_pred = model.predict(X_train)
-    test_pred = model.predict(X_test)
+    for model_name, regressor in candidate_models.items():
+        pipeline = build_pipeline_with_model(regressor)
+        pipeline.fit(X_train, y_train)
 
-    train_metrics = evaluate_model(y_train, train_pred)
-    test_metrics = evaluate_model(y_test, test_pred)
+        train_predictions = pipeline.predict(X_train)
+        test_predictions = pipeline.predict(X_test)
+
+        train_metrics = evaluate_regression(y_train, train_predictions)
+        test_metrics = evaluate_regression(y_test, test_predictions)
+        overfit_gap = calculate_overfit_gap(train_metrics, test_metrics)
+
+        model_results[model_name] = {
+            "train": train_metrics,
+            "test": test_metrics,
+            "overfit_gap_r2": overfit_gap,
+        }
+
+        if test_metrics["mae"] < best_test_mae:
+            best_test_mae = test_metrics["mae"]
+            best_model_name = model_name
+            best_model_pipeline = pipeline
 
     metrics = {
-        "baseline_test": baseline_result,
-        "train": train_metrics,
-        "test": test_metrics,
+        "baseline_test": baseline_metrics,
+        "all_models": model_results,
+        "selected_model_name": best_model_name,
+        "selected_model_train": model_results[best_model_name]["train"],
+        "selected_model_test": model_results[best_model_name]["test"],
+        "selected_model_overfit_gap_r2": model_results[best_model_name]["overfit_gap_r2"],
         "target_mean_train": round(float(baseline_value), 4),
         "n_rows": int(len(df)),
         "n_train": int(len(X_train)),
@@ -222,34 +310,182 @@ def main():
     }
 
     model_info = {
-        "feature_columns": feature_columns,
-        "numeric_features": numeric_features,
-        "categorical_features": categorical_features,
-        "target_column": target_column,
+        "problem_type": "regression",
+        "target_column": "length_of_stay",
         "target_description": "Patient length of stay in days",
+        "feature_columns": FEATURE_COLUMNS,
+        "numeric_features": NUMERIC_FEATURES,
+        "categorical_features": CATEGORICAL_FEATURES,
         "short_stay_threshold": 3,
         "medium_stay_threshold": 7,
+        "selected_model_name": best_model_name,
     }
 
-    joblib.dump(model, MODEL_PATH)
-    joblib.dump(model_info, MODEL_INFO_PATH)
+    return best_model_pipeline, model_info, metrics
 
-    with open(METRICS_PATH, "w", encoding="utf-8") as f:
+def train_billing_amount_model(df):
+    """
+    Train and compare multiple candidate models for Billing Amount.
+    Select the best model primarily by test MAE, while also inspecting overfit gap.
+    """
+    billing_df = df.dropna(subset=["Billing Amount"]).copy()
+
+    X = billing_df[FEATURE_COLUMNS].copy()
+    y = billing_df["Billing Amount"].copy()
+
+    X_train, X_test, y_train, y_test = train_test_split(
+        X,
+        y,
+        test_size=0.2,
+        random_state=42,
+    )
+
+    baseline_value = y_train.mean()
+    baseline_metrics = evaluate_baseline(y_test, baseline_value)
+
+    candidate_models = get_candidate_models()
+    model_results = {}
+
+    best_model_name = None
+    best_model_pipeline = None
+    best_test_mae = float("inf")
+
+    for model_name, regressor in candidate_models.items():
+        pipeline = build_pipeline_with_model(regressor)
+        pipeline.fit(X_train, y_train)
+
+        train_predictions = pipeline.predict(X_train)
+        test_predictions = pipeline.predict(X_test)
+
+        train_metrics = evaluate_regression(y_train, train_predictions)
+        test_metrics = evaluate_regression(y_test, test_predictions)
+        overfit_gap = calculate_overfit_gap(train_metrics, test_metrics)
+
+        model_results[model_name] = {
+            "train": train_metrics,
+            "test": test_metrics,
+            "overfit_gap_r2": overfit_gap,
+        }
+
+        if test_metrics["mae"] < best_test_mae:
+            best_test_mae = test_metrics["mae"]
+            best_model_name = model_name
+            best_model_pipeline = pipeline
+
+    metrics = {
+        "baseline_test": baseline_metrics,
+        "all_models": model_results,
+        "selected_model_name": best_model_name,
+        "selected_model_train": model_results[best_model_name]["train"],
+        "selected_model_test": model_results[best_model_name]["test"],
+        "selected_model_overfit_gap_r2": model_results[best_model_name]["overfit_gap_r2"],
+        "target_mean_train": round(float(baseline_value), 4),
+        "n_rows": int(len(billing_df)),
+        "n_train": int(len(X_train)),
+        "n_test": int(len(X_test)),
+    }
+
+    model_info = {
+        "problem_type": "regression",
+        "target_column": "Billing Amount",
+        "target_description": "Estimated hospital billing amount",
+        "feature_columns": FEATURE_COLUMNS,
+        "numeric_features": NUMERIC_FEATURES,
+        "categorical_features": CATEGORICAL_FEATURES,
+        "selected_model_name": best_model_name,
+    }
+
+    return best_model_pipeline, model_info, metrics
+
+
+# =========================
+# SAVE FUNCTIONS
+# =========================
+def save_los_artifacts(model, model_info, metrics):
+    """Save LOS model outputs to disk."""
+    os.makedirs(MODEL_DIR, exist_ok=True)
+
+    joblib.dump(model, LOS_MODEL_PATH)
+    joblib.dump(model_info, LOS_MODEL_INFO_PATH)
+
+    with open(LOS_METRICS_PATH, "w", encoding="utf-8") as f:
         json.dump(metrics, f, ensure_ascii=False, indent=4)
 
-    print("\nEğitim tamamlandı.")
-    print("\nBaseline Test Metrics:")
-    print(json.dumps(baseline_result, indent=4))
 
-    print("\nTrain Metrics:")
-    print(json.dumps(train_metrics, indent=4))
+def save_billing_artifacts(model, model_info, metrics):
+    """Save Billing model outputs to disk."""
+    os.makedirs(MODEL_DIR, exist_ok=True)
 
-    print("\nTest Metrics:")
-    print(json.dumps(test_metrics, indent=4))
+    joblib.dump(model, BILLING_MODEL_PATH)
+    joblib.dump(model_info, BILLING_MODEL_INFO_PATH)
 
-    print(f"\nModel kaydedildi: {MODEL_PATH}")
-    print(f"Model bilgisi kaydedildi: {MODEL_INFO_PATH}")
-    print(f"Metrikler kaydedildi: {METRICS_PATH}")
+    with open(BILLING_METRICS_PATH, "w", encoding="utf-8") as f:
+        json.dump(metrics, f, ensure_ascii=False, indent=4)
+
+
+# =========================
+# MAIN
+# =========================
+def main():
+    print("Veri yükleniyor...")
+    df = load_data(DATA_PATH)
+
+    print("Veri temizleniyor ve target oluşturuluyor...")
+    df = preprocess_dataframe(df)
+
+    print(f"Temizlenmiş veri boyutu: {df.shape}")
+
+    print("Length of Stay modeli eğitiliyor...")
+    los_model, los_model_info, los_metrics = train_length_of_stay_model(df)
+    save_los_artifacts(los_model, los_model_info, los_metrics)
+
+    print("\nLOS eğitim tamamlandı.")
+    print(f"\nLOS seçilen model: {los_metrics['selected_model_name']}")
+
+    print("\nLOS Selected Model Train Metrics:")
+    print(json.dumps(los_metrics["selected_model_train"], indent=4))
+
+    print("\nLOS Selected Model Test Metrics:")
+    print(json.dumps(los_metrics["selected_model_test"], indent=4))
+
+    print("\nLOS Selected Model Overfit Gap (R²):")
+    print(los_metrics["selected_model_overfit_gap_r2"])
+
+    print("\nLOS Baseline Test Metrics:")
+    print(json.dumps(los_metrics["baseline_test"], indent=4))
+
+    print("\nLOS All Model Results:")
+    print(json.dumps(los_metrics["all_models"], indent=4))
+
+    print(f"\nLOS model kaydedildi: {LOS_MODEL_PATH}")
+    print(f"LOS model bilgisi kaydedildi: {LOS_MODEL_INFO_PATH}")
+    print(f"LOS metrikleri kaydedildi: {LOS_METRICS_PATH}")
+
+    print("\nBilling Amount modeli eğitiliyor...")
+    billing_model, billing_model_info, billing_metrics = train_billing_amount_model(df)
+    save_billing_artifacts(billing_model, billing_model_info, billing_metrics)
+
+    print("\nBilling eğitim tamamlandı.")
+    print(f"\nBilling seçilen model: {billing_metrics['selected_model_name']}")
+
+    print("\nBilling Selected Model Train Metrics:")
+    print(json.dumps(billing_metrics["selected_model_train"], indent=4))
+
+    print("\nBilling Selected Model Test Metrics:")
+    print(json.dumps(billing_metrics["selected_model_test"], indent=4))
+
+    print("\nBilling Selected Model Overfit Gap (R²):")
+    print(billing_metrics["selected_model_overfit_gap_r2"])
+
+    print("\nBilling Baseline Test Metrics:")
+    print(json.dumps(billing_metrics["baseline_test"], indent=4))
+
+    print("\nBilling All Model Results:")
+    print(json.dumps(billing_metrics["all_models"], indent=4))
+
+    print(f"\nBilling model kaydedildi: {BILLING_MODEL_PATH}")
+    print(f"Billing model bilgisi kaydedildi: {BILLING_MODEL_INFO_PATH}")
+    print(f"Billing metrikleri kaydedildi: {BILLING_METRICS_PATH}")
 
 
 if __name__ == "__main__":

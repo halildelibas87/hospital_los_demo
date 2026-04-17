@@ -1,0 +1,77 @@
+{
+    "baseline_test": {
+        "mae": 12187.663,
+        "rmse": 14104.2264,
+        "r2": -0.0001
+    },
+    "all_models": {
+        "linear_regression": {
+            "train": {
+                "mae": 12318.3798,
+                "rmse": 14232.6565,
+                "r2": 0.0008
+            },
+            "test": {
+                "mae": 12191.8667,
+                "rmse": 14110.4133,
+                "r2": -0.001
+            },
+            "overfit_gap_r2": 0.0018
+        },
+        "ridge": {
+            "train": {
+                "mae": 12318.3802,
+                "rmse": 14232.6565,
+                "r2": 0.0008
+            },
+            "test": {
+                "mae": 12191.8664,
+                "rmse": 14110.4123,
+                "r2": -0.001
+            },
+            "overfit_gap_r2": 0.0018
+        },
+        "random_forest": {
+            "train": {
+                "mae": 11882.857,
+                "rmse": 13736.3588,
+                "r2": 0.0692
+            },
+            "test": {
+                "mae": 12171.2862,
+                "rmse": 14087.9093,
+                "r2": 0.0022
+            },
+            "overfit_gap_r2": 0.067
+        },
+        "gradient_boosting": {
+            "train": {
+                "mae": 12273.0106,
+                "rmse": 14184.516,
+                "r2": 0.0075
+            },
+            "test": {
+                "mae": 12196.5098,
+                "rmse": 14115.3613,
+                "r2": -0.0017
+            },
+            "overfit_gap_r2": 0.0092
+        }
+    },
+    "selected_model_name": "random_forest",
+    "selected_model_train": {
+        "mae": 11882.857,
+        "rmse": 13736.3588,
+        "r2": 0.0692
+    },
+    "selected_model_test": {
+        "mae": 12171.2862,
+        "rmse": 14087.9093,
+        "r2": 0.0022
+    },
+    "selected_model_overfit_gap_r2": 0.067,
+    "target_mean_train": 25511.1689,
+    "n_rows": 55500,
+    "n_train": 44400,
+    "n_test": 11100
+}
