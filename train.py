@@ -149,6 +149,27 @@ def preprocess_dataframe(df):
 
     return df
 
+def extract_category_options(df):
+    """
+    Extract sorted category values from cleaned dataframe for UI dropdowns.
+    """
+    category_options = {}
+
+    for col in CATEGORICAL_FEATURES:
+        values = (
+            df[col]
+            .dropna()
+            .astype(str)
+            .str.strip()
+            .loc[lambda s: s != ""]
+            .sort_values()
+            .unique()
+            .tolist()
+        )
+        category_options[col] = values
+
+    return category_options
+
 
 # =========================
 # MODEL BUILDING
@@ -313,6 +334,8 @@ def train_length_of_stay_model(df):
         "data_path": DATA_PATH,
     }
 
+    category_options = extract_category_options(df)
+
     model_info = {
         "problem_type": "regression",
         "target_column": "length_of_stay",
@@ -320,6 +343,7 @@ def train_length_of_stay_model(df):
         "feature_columns": FEATURE_COLUMNS,
         "numeric_features": NUMERIC_FEATURES,
         "categorical_features": CATEGORICAL_FEATURES,
+        "category_options": category_options,
         "short_stay_threshold": 3,
         "medium_stay_threshold": 7,
         "selected_model_name": best_model_name,
@@ -392,6 +416,8 @@ def train_billing_amount_model(df):
         "data_path": DATA_PATH,
     }
 
+    category_options = extract_category_options(df)
+
     model_info = {
         "problem_type": "regression",
         "target_column": "Billing Amount",
@@ -399,6 +425,7 @@ def train_billing_amount_model(df):
         "feature_columns": FEATURE_COLUMNS,
         "numeric_features": NUMERIC_FEATURES,
         "categorical_features": CATEGORICAL_FEATURES,
+        "category_options": category_options,
         "selected_model_name": best_model_name,
         "data_path": DATA_PATH,
     }
