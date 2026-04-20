@@ -18,7 +18,7 @@ from sklearn.preprocessing import OneHotEncoder
 # =========================
 # PATH CONFIGURATION
 # =========================
-DATA_PATH = "data/healthcare_dataset.csv"
+DATA_PATH = "data/synthetic_healthcare_50k.csv"
 MODEL_DIR = "model"
 
 LOS_MODEL_PATH = os.path.join(MODEL_DIR, "los_model.pkl")
@@ -71,6 +71,9 @@ def clean_text(value):
 
 def load_data(path):
     """Load raw CSV and validate expected columns."""
+    if not os.path.exists(path):
+        raise FileNotFoundError(f"Veri dosyası bulunamadı: {path}")
+
     df = pd.read_csv(path)
     df.columns = [col.strip() for col in df.columns]
 
@@ -129,12 +132,10 @@ def preprocess_dataframe(df):
     df["Billing Amount"] = pd.to_numeric(df["Billing Amount"], errors="coerce")
     df["Room Number"] = pd.to_numeric(df["Room Number"], errors="coerce")
 
-    # Create target for current project
     df["length_of_stay"] = (
         df["Discharge Date"] - df["Date of Admission"]
     ).dt.days
 
-    # Keep only valid rows
     df = df.dropna(
         subset=[
             "Age",
@@ -233,12 +234,14 @@ def evaluate_regression(y_true, y_pred):
         "r2": round(float(r2), 4),
     }
 
+
 def calculate_overfit_gap(train_metrics, test_metrics):
     """
     Simple overfitting indicator based on R² gap.
     Higher gap means the model fits train much better than test.
     """
     return round(train_metrics["r2"] - test_metrics["r2"], 4)
+
 
 def evaluate_baseline(y_true, baseline_value):
     """Compare model against simple mean baseline."""
@@ -307,6 +310,7 @@ def train_length_of_stay_model(df):
         "n_rows": int(len(df)),
         "n_train": int(len(X_train)),
         "n_test": int(len(X_test)),
+        "data_path": DATA_PATH,
     }
 
     model_info = {
@@ -319,9 +323,11 @@ def train_length_of_stay_model(df):
         "short_stay_threshold": 3,
         "medium_stay_threshold": 7,
         "selected_model_name": best_model_name,
+        "data_path": DATA_PATH,
     }
 
     return best_model_pipeline, model_info, metrics
+
 
 def train_billing_amount_model(df):
     """
@@ -383,6 +389,7 @@ def train_billing_amount_model(df):
         "n_rows": int(len(billing_df)),
         "n_train": int(len(X_train)),
         "n_test": int(len(X_test)),
+        "data_path": DATA_PATH,
     }
 
     model_info = {
@@ -393,6 +400,7 @@ def train_billing_amount_model(df):
         "numeric_features": NUMERIC_FEATURES,
         "categorical_features": CATEGORICAL_FEATURES,
         "selected_model_name": best_model_name,
+        "data_path": DATA_PATH,
     }
 
     return best_model_pipeline, model_info, metrics
@@ -434,6 +442,7 @@ def main():
     df = preprocess_dataframe(df)
 
     print(f"Temizlenmiş veri boyutu: {df.shape}")
+    print(f"Kullanılan veri dosyası: {DATA_PATH}")
 
     print("Length of Stay modeli eğitiliyor...")
     los_model, los_model_info, los_metrics = train_length_of_stay_model(df)

@@ -1,77 +1,78 @@
 {
     "baseline_test": {
-        "mae": 7.4814,
-        "rmse": 8.6292,
+        "mae": 6.2074,
+        "rmse": 7.724,
         "r2": -0.0001
     },
     "all_models": {
         "linear_regression": {
             "train": {
-                "mae": 7.5136,
-                "rmse": 8.6638,
-                "r2": 0.0008
+                "mae": 1.6875,
+                "rmse": 2.1063,
+                "r2": 0.9273
             },
             "test": {
-                "mae": 7.4827,
-                "rmse": 8.632,
-                "r2": -0.0008
+                "mae": 1.6987,
+                "rmse": 2.1272,
+                "r2": 0.9241
             },
-            "overfit_gap_r2": 0.0016
+            "overfit_gap_r2": 0.0032
         },
         "ridge": {
             "train": {
-                "mae": 7.5136,
-                "rmse": 8.6638,
-                "r2": 0.0008
+                "mae": 1.6875,
+                "rmse": 2.1063,
+                "r2": 0.9273
             },
             "test": {
-                "mae": 7.4827,
-                "rmse": 8.632,
-                "r2": -0.0008
+                "mae": 1.6986,
+                "rmse": 2.1272,
+                "r2": 0.9241
             },
-            "overfit_gap_r2": 0.0016
+            "overfit_gap_r2": 0.0032
         },
         "random_forest": {
             "train": {
-                "mae": 7.2096,
-                "rmse": 8.3211,
-                "r2": 0.0783
+                "mae": 1.4082,
+                "rmse": 1.7709,
+                "r2": 0.9486
             },
             "test": {
-                "mae": 7.4682,
-                "rmse": 8.6233,
-                "r2": 0.0012
+                "mae": 1.5022,
+                "rmse": 1.888,
+                "r2": 0.9402
             },
-            "overfit_gap_r2": 0.0771
+            "overfit_gap_r2": 0.0084
         },
         "gradient_boosting": {
             "train": {
-                "mae": 7.487,
-                "rmse": 8.6364,
-                "r2": 0.0071
+                "mae": 1.4407,
+                "rmse": 1.8236,
+                "r2": 0.9455
             },
             "test": {
-                "mae": 7.4851,
-                "rmse": 8.6362,
-                "r2": -0.0018
+                "mae": 1.4527,
+                "rmse": 1.842,
+                "r2": 0.9431
             },
-            "overfit_gap_r2": 0.0089
+            "overfit_gap_r2": 0.0024
         }
     },
-    "selected_model_name": "random_forest",
+    "selected_model_name": "gradient_boosting",
     "selected_model_train": {
-        "mae": 7.2096,
-        "rmse": 8.3211,
-        "r2": 0.0783
+        "mae": 1.4407,
+        "rmse": 1.8236,
+        "r2": 0.9455
     },
     "selected_model_test": {
-        "mae": 7.4682,
-        "rmse": 8.6233,
-        "r2": 0.0012
+        "mae": 1.4527,
+        "rmse": 1.842,
+        "r2": 0.9431
     },
-    "selected_model_overfit_gap_r2": 0.0771,
-    "target_mean_train": 15.5299,
-    "n_rows": 55500,
-    "n_train": 44400,
-    "n_test": 11100
+    "selected_model_overfit_gap_r2": 0.0024,
+    "target_mean_train": 18.855,
+    "n_rows": 50000,
+    "n_train": 40000,
+    "n_test": 10000,
+    "data_path": "data/synthetic_healthcare_50k.csv"
 }
