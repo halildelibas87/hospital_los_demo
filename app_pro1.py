@@ -66,23 +66,14 @@ def inject_custom_css():
     st.markdown(
         """
         <style>
-        html {
-            scroll-behavior: smooth;
-        }
+        html { scroll-behavior: smooth; }
 
-        header[data-testid="stHeader"] {
-            display: none;
-        }
-
+        header[data-testid="stHeader"],
         div[data-testid="stToolbar"] {
             display: none;
         }
 
-        #MainMenu {
-            visibility: hidden;
-        }
-
-        footer {
+        #MainMenu, footer {
             visibility: hidden;
         }
 
@@ -209,7 +200,7 @@ def inject_custom_css():
             line-height: 1.7;
         }
 
-        .card {
+        .card, .contact-box {
             background: white;
             border: 1px solid #dde8ef;
             border-radius: 22px;
@@ -258,14 +249,6 @@ def inject_custom_css():
             margin-top: 0.35rem;
         }
 
-        .contact-box {
-            background: white;
-            border: 1px solid #dde8ef;
-            border-radius: 22px;
-            padding: 1.25rem;
-            box-shadow: 0 10px 30px rgba(15, 23, 42, 0.05);
-        }
-
         .footer {
             margin-top: 2rem;
             padding: 1.2rem;
@@ -274,6 +257,7 @@ def inject_custom_css():
             font-size: 0.9rem;
         }
 
+        /* Form container */
         div[data-testid="stForm"] {
             background: white;
             border: 1px solid #dde8ef;
@@ -282,7 +266,6 @@ def inject_custom_css():
             box-shadow: 0 10px 30px rgba(15, 23, 42, 0.05);
         }
 
-        /* Form başlıkları */
         div[data-testid="stForm"] h1,
         div[data-testid="stForm"] h2,
         div[data-testid="stForm"] h3,
@@ -292,110 +275,121 @@ def inject_custom_css():
             color: #0f172a !important;
         }
 
-        /* Form label'ları */
         div[data-testid="stForm"] [data-testid="stWidgetLabel"] {
             color: #0f172a !important;
             font-weight: 600 !important;
         }
 
-        /* Number input dış kutu */
-        div[data-testid="stForm"] [data-baseweb="input"] > div {
+        /* Inputs */
+        div[data-testid="stForm"] div[data-baseweb="input"] > div,
+        div[data-testid="stForm"] div[data-baseweb="select"] > div {
             background-color: #ffffff !important;
             border: 1px solid #cbd5e1 !important;
             border-radius: 10px !important;
         }
 
-        /* Number input iç yazı */
-        div[data-testid="stForm"] [data-baseweb="input"] input {
+        div[data-testid="stForm"] div[data-baseweb="input"] input {
             color: #0f172a !important;
-            background: transparent !important;
+            background: #ffffff !important;
             -webkit-text-fill-color: #0f172a !important;
         }
 
-        /* Selectbox dış kutu */
-        div[data-testid="stForm"] [data-baseweb="select"] > div {
-            background-color: #ffffff !important;
-            border: 1px solid #cbd5e1 !important;
-            border-radius: 10px !important;
-        }
-
-        /* Selectbox seçili değer ve ikon alanı */
-        div[data-testid="stForm"] [data-baseweb="select"] span,
-        div[data-testid="stForm"] [data-baseweb="select"] div {
+        div[data-testid="stForm"] div[data-baseweb="select"] span,
+        div[data-testid="stForm"] div[data-baseweb="select"] div {
             color: #0f172a !important;
             -webkit-text-fill-color: #0f172a !important;
         }
 
-        /* Dropdown listesi */
         div[role="listbox"] {
-            background: white !important;
+            background: #ffffff !important;
         }
 
         div[role="option"] {
             color: #0f172a !important;
-            background: white !important;
+            background: #ffffff !important;
         }
 
         div[role="option"]:hover {
             background: #eef7f8 !important;
         }
 
-        /* Label */
-        div[data-testid="stForm"] [data-testid="stWidgetLabel"] {
-            color: #0f172a !important;
-            font-weight: 600;
+        /* Number input +/- buttons */
+        div[data-testid="stNumberInput"] button {
+            background: #14b8a6 !important;
+            color: #ffffff !important;
+            border: none !important;
         }
 
-        /* INPUT BOX (Age vs) */
-        div[data-testid="stForm"] [data-baseweb="input"] > div {
-            background-color: #ffffff !important;
+        div[data-testid="stNumberInput"] button:hover {
+            background: #0f766e !important;
+            color: #ffffff !important;
+        }
+
+        div[data-testid="stNumberInput"] button svg {
+            fill: #ffffff !important;
+            color: #ffffff !important;
+        }
+
+        /* Form submit button only */
+        div[data-testid="stFormSubmitButton"] button {
+            background: linear-gradient(135deg, #0f766e 0%, #14b8a6 100%) !important;
+            color: #ffffff !important;
+            border: none !important;
+            border-radius: 12px !important;
+            font-weight: 700 !important;
+            padding: 0.65rem 1.15rem !important;
+            box-shadow: 0 8px 18px rgba(20, 184, 166, 0.22);
+        }
+
+        div[data-testid="stFormSubmitButton"] button p {
+            color: #ffffff !important;
+            font-weight: 700 !important;
+        }
+
+        div[data-testid="stFormSubmitButton"] button:hover {
+            background: linear-gradient(135deg, #115e59 0%, #0f766e 100%) !important;
+            color: #ffffff !important;
+        }
+
+        /* Portal switch */
+        div[role="radiogroup"] {
+            display: flex;
+            gap: 14px;
+            margin: 0.8rem 0 1.4rem 0;
+        }
+
+        div[role="radiogroup"] label {
+            min-width: 260px;
+            background: #ffffff !important;
             border: 1px solid #cbd5e1 !important;
-            border-radius: 10px !important;
+            border-radius: 999px !important;
+            padding: 0.75rem 1.25rem !important;
+            box-shadow: 0 6px 18px rgba(15, 23, 42, 0.05);
         }
 
-        div[data-testid="stForm"] [data-baseweb="input"] input {
+        div[role="radiogroup"] label p {
             color: #0f172a !important;
-            background: transparent !important;
-            -webkit-text-fill-color: #0f172a !important;
+            font-weight: 700 !important;
+            font-size: 0.98rem !important;
         }
 
-        /* SELECTBOX */
-        div[data-testid="stForm"] [data-baseweb="select"] > div {
-            background-color: #ffffff !important;
-            border: 1px solid #cbd5e1 !important;
-            border-radius: 10px !important;
+        div[role="radiogroup"] label:has(input:checked) {
+            background: linear-gradient(135deg, #0f766e 0%, #14b8a6 100%) !important;
+            border-color: #0f766e !important;
         }
 
-        div[data-testid="stForm"] [data-baseweb="select"] span {
-            color: #0f172a !important;
+        div[role="radiogroup"] label:has(input:checked) p {
+            color: #ffffff !important;
         }
 
-        /* Dropdown açıldığında */
-        div[role="listbox"] {
-            background: white !important;
-        }
-
-        div[role="option"] {
-            color: #0f172a !important;
-        }
-
-        div[role="option"]:hover {
-            background: #eef7f8 !important;
-        }
-
-        .stButton > button, .stForm button {
-            background: linear-gradient(135deg, #0f766e 0%, #14b8a6 100%);
-            color: white;
-            border: none;
-            border-radius: 12px;
-            font-weight: 700;
-            padding: 0.6rem 1rem;
+        div[role="radiogroup"] input[type="radio"] {
+            opacity: 0 !important;
+            position: absolute !important;
         }
         </style>
         """,
         unsafe_allow_html=True,
     )
-
 
 def render_topbar():
     st.markdown('<div class="topbar-shell">', unsafe_allow_html=True)
@@ -574,145 +568,251 @@ def render_trust_section(los_model_info, billing_model_info):
 
 def render_demo_section(los_model, los_model_info, billing_model):
     st.markdown('<span id="demo-section" class="anchor-offset"></span>', unsafe_allow_html=True)
-    st.markdown('<div class="section-title">Healthcare Intelligence Panel</div>', unsafe_allow_html=True)
+
     st.markdown(
-        '<div class="section-subtitle">Hospitals and patients can enter admission-related information and instantly receive estimate outputs.</div>',
+        '<div class="section-title">Patient Insight Dashboard</div>',
+        unsafe_allow_html=True,
+    )
+
+    st.markdown(
+        '<div class="section-subtitle">MEDINTEL provides separate estimation experiences for patients and hospital teams while using the same intelligence engine.</div>',
         unsafe_allow_html=True,
     )
 
     category_options = los_model_info.get("category_options", {})
+
     gender_options = category_options.get("Gender", ["Male", "Female"])
-    blood_type_options = category_options.get("Blood Type", ["A+", "A-", "B+", "B-", "AB+", "AB-", "O+", "O-"])
+    blood_type_options = category_options.get(
+        "Blood Type",
+        ["A+", "A-", "B+", "B-", "AB+", "AB-", "O+", "O-"],
+    )
     medical_condition_options = category_options.get("Medical Condition", ["Diabetes"])
     insurance_provider_options = category_options.get("Insurance Provider", ["Aetna"])
     admission_type_options = category_options.get("Admission Type", ["Emergency"])
     medication_options = category_options.get("Medication", ["Aspirin"])
     test_results_options = category_options.get("Test Results", ["Normal"])
 
-    with st.form("prediction_form"):
-        st.markdown(
-            '<h3 style="color:#0f172a; margin-bottom: 1rem;">Enter Patient Information</h3>',
-            unsafe_allow_html=True,
-        )
+    def prediction_form(form_key, user_type):
+        if user_type == "patient":
+            title = "Provide Your Details for Personalized Estimates"
+            button_text = "View My Estimate"
+            loading_text = "Preparing your personalized estimate..."
+        else:
+            title = "Enter Admission Details for Operational Planning"
+            button_text = "Generate Hospital Estimate"
+            loading_text = "Generating operational estimate..."
 
-        c1, c2, c3, c4 = st.columns(4)
-        with c1:
-            age = st.number_input("Age", min_value=0, max_value=120, value=45, step=1)
-        with c2:
-            gender = st.selectbox("Gender", gender_options, index=get_default_index(gender_options, "Male"))
-        with c3:
-            blood_type = st.selectbox("Blood Type", blood_type_options, index=get_default_index(blood_type_options, "A+"))
-        with c4:
-            medical_condition = st.selectbox(
-                "Medical Condition",
-                medical_condition_options,
-                index=get_default_index(medical_condition_options, None),
-            )
-
-        c5, c6, c7, c8 = st.columns(4)
-        with c5:
-            insurance_provider = st.selectbox(
-                "Insurance Provider",
-                insurance_provider_options,
-                index=get_default_index(insurance_provider_options, None),
-            )
-        with c6:
-            admission_type = st.selectbox(
-                "Admission Type",
-                admission_type_options,
-                index=get_default_index(admission_type_options, "Emergency"),
-            )
-        with c7:
-            medication = st.selectbox(
-                "Medication",
-                medication_options,
-                index=get_default_index(medication_options, None),
-            )
-        with c8:
-            test_results = st.selectbox(
-                "Test Results",
-                test_results_options,
-                index=get_default_index(test_results_options, "Normal"),
-            )
-
-        submitted = st.form_submit_button("Get Estimate")
-
-    if submitted:
-        input_df = build_input_dataframe(
-            age=age,
-            gender=gender,
-            blood_type=blood_type,
-            medical_condition=medical_condition,
-            insurance_provider=insurance_provider,
-            admission_type=admission_type,
-            medication=medication,
-            test_results=test_results,
-        )
-
-        with st.spinner("Calculating medical estimates..."):
-            los_prediction = los_model.predict(input_df)[0]
-            billing_prediction = billing_model.predict(input_df)[0]
-
-        los_prediction = max(0, round(float(los_prediction), 1))
-        billing_prediction = max(0, round(float(billing_prediction), 2))
-
-        short_threshold = los_model_info.get("short_stay_threshold", 3)
-        medium_threshold = los_model_info.get("medium_stay_threshold", 7)
-        stay_band, stay_explanation = get_stay_band(
-            los_prediction,
-            short_threshold=short_threshold,
-            medium_threshold=medium_threshold,
-        )
-
-        st.markdown("<br>", unsafe_allow_html=True)
-
-        m1, m2, m3 = st.columns(3)
-        with m1:
+        with st.form(form_key):
             st.markdown(
-                f"""
-                <div class="metric-card">
-                    <div class="metric-label">Estimated Length of Stay</div>
-                    <div class="metric-value">{los_prediction}</div>
-                    <div class="metric-caption">days</div>
-                </div>
-                """,
-                unsafe_allow_html=True,
-            )
-        with m2:
-            st.markdown(
-                f"""
-                <div class="metric-card">
-                    <div class="metric-label">Estimated Billing Amount</div>
-                    <div class="metric-value">${billing_prediction:,.0f}</div>
-                    <div class="metric-caption">projected total</div>
-                </div>
-                """,
-                unsafe_allow_html=True,
-            )
-        with m3:
-            st.markdown(
-                f"""
-                <div class="metric-card">
-                    <div class="metric-label">Stay Category</div>
-                    <div class="metric-value" style="font-size:1.35rem;">{stay_band}</div>
-                    <div class="metric-caption">{stay_explanation}</div>
-                </div>
-                """,
+                f'<h3 style="color:#0f172a; margin-bottom: 1rem;">{title}</h3>',
                 unsafe_allow_html=True,
             )
 
-        with st.expander("View Submitted Information"):
-            st.dataframe(input_df, use_container_width=True)
+            c1, c2, c3, c4 = st.columns(4)
+
+            with c1:
+                age = st.number_input(
+                    "Age",
+                    min_value=0,
+                    max_value=120,
+                    value=45,
+                    step=1,
+                    key=f"{form_key}_age",
+                )
+
+            with c2:
+                gender = st.selectbox(
+                    "Gender",
+                    gender_options,
+                    index=get_default_index(gender_options, "Male"),
+                    key=f"{form_key}_gender",
+                )
+
+            with c3:
+                blood_type = st.selectbox(
+                    "Blood Type",
+                    blood_type_options,
+                    index=get_default_index(blood_type_options, "A+"),
+                    key=f"{form_key}_blood_type",
+                )
+
+            with c4:
+                medical_condition = st.selectbox(
+                    "Medical Condition",
+                    medical_condition_options,
+                    index=get_default_index(medical_condition_options, None),
+                    key=f"{form_key}_medical_condition",
+                )
+
+            c5, c6, c7, c8 = st.columns(4)
+
+            with c5:
+                insurance_provider = st.selectbox(
+                    "Insurance Provider",
+                    insurance_provider_options,
+                    index=get_default_index(insurance_provider_options, None),
+                    key=f"{form_key}_insurance_provider",
+                )
+
+            with c6:
+                admission_type = st.selectbox(
+                    "Admission Type",
+                    admission_type_options,
+                    index=get_default_index(admission_type_options, "Emergency"),
+                    key=f"{form_key}_admission_type",
+                )
+
+            with c7:
+                medication = st.selectbox(
+                    "Medication",
+                    medication_options,
+                    index=get_default_index(medication_options, None),
+                    key=f"{form_key}_medication",
+                )
+
+            with c8:
+                test_results = st.selectbox(
+                    "Test Results",
+                    test_results_options,
+                    index=get_default_index(test_results_options, "Normal"),
+                    key=f"{form_key}_test_results",
+                )
+
+            submitted = st.form_submit_button(button_text)
+
+        if submitted:
+            input_df = build_input_dataframe(
+                age=age,
+                gender=gender,
+                blood_type=blood_type,
+                medical_condition=medical_condition,
+                insurance_provider=insurance_provider,
+                admission_type=admission_type,
+                medication=medication,
+                test_results=test_results,
+            )
+
+            with st.spinner(loading_text):
+                los_prediction = los_model.predict(input_df)[0]
+                billing_prediction = billing_model.predict(input_df)[0]
+
+            los_prediction = max(0, round(float(los_prediction), 1))
+            billing_prediction = max(0, round(float(billing_prediction), 2))
+
+
+            st.markdown("<br>", unsafe_allow_html=True)
+
+            result_left, result_right = st.columns([1.2, 1], gap="large")
+
+            with result_left:
+                st.markdown(
+                    f"""
+                    <div class="metric-card" style="
+                        background: linear-gradient(135deg, #0f766e 0%, #14b8a6 100%);
+                        color: white;
+                        border: none;
+                        min-height: 180px;
+                        display: flex;
+                        flex-direction: column;
+                        justify-content: center;
+                    ">
+                        <div class="metric-label" style="color:#e0f7f5;">
+                            Estimated Billing Amount
+                        </div>
+                        <div class="metric-value" style="color:white; font-size:2.8rem;">
+                            ${billing_prediction:,.0f}
+                        </div>
+                        <div class="metric-caption" style="color:#d1faf5;">
+                            projected total
+                        </div>
+                    </div>
+                    """,
+                    unsafe_allow_html=True,
+                )
+
+            with result_right:
+                st.markdown(
+                    f"""
+                    <div class="metric-card" style="
+                        min-height: 180px;
+                        display: flex;
+                        flex-direction: column;
+                        justify-content: center;
+                    ">
+                        <div class="metric-label">
+                            Estimated Length of Stay
+                        </div>
+                        <div class="metric-value">
+                            {los_prediction}
+                        </div>
+                        <div class="metric-caption">
+                            days
+                        </div>
+                    </div>
+                    """,
+                    unsafe_allow_html=True,
+                )
+
+            if user_type == "patient":
+                st.markdown(
+                    """
+                    <div class="card" style="margin-top: 1rem;">
+                        <h3>Patient Note</h3>
+                        <p>This estimate is designed to help patients understand possible stay duration and projected billing. It does not replace medical or financial advice.</p>
+                    </div>
+                    """,
+                    unsafe_allow_html=True,
+                )
+            else:
+                st.markdown(
+                    """
+                    <div class="card" style="margin-top: 1rem;">
+                        <h3>Hospital Planning Note</h3>
+                        <p>This estimate can support bed planning, resource allocation, and operational forecasting. It should be used as a decision-support output, not as a final clinical decision.</p>
+                    </div>
+                    """,
+                    unsafe_allow_html=True,
+                )
+
+            with st.expander("View Submitted Information"):
+                st.dataframe(input_df, use_container_width=True)
+
+        else:
+            if user_type == "patient":
+                st.markdown(
+                    """
+                    <div class="card">
+                        <h3>Patient Estimate Panel</h3>
+                        <p>Complete the form above to view your estimated hospital stay duration, projected billing amount, and stay category.</p>
+                    </div>
+                    """,
+                    unsafe_allow_html=True,
+                )
+            else:
+                st.markdown(
+                    """
+                    <div class="card">
+                        <h3>Hospital Operations Panel</h3>
+                        <p>Complete the form above to generate estimates that can support hospital planning, capacity management, and operational visibility.</p>
+                    </div>
+                    """,
+                    unsafe_allow_html=True,
+                )
+
+    # 👇 BURASI ÖNEMLİ: aynı indent
+    selected_portal = st.radio(
+        label="Select Portal",
+        options=["Patient Estimate Portal", "Hospital Operations Panel"],
+        horizontal=True,
+        label_visibility="collapsed",
+    )
+
+    if selected_portal == "Patient Estimate Portal":
+        prediction_form("patient_form", "patient")
     else:
-        st.markdown(
-            """
-            <div class="card">
-                <h3>Live Prediction Panel</h3>
-                <p>Complete the patient information form above to generate estimated stay duration, billing amount, and stay category.</p>
-            </div>
-            """,
-            unsafe_allow_html=True,
-        )
+        prediction_form("hospital_form", "hospital")
+
+
 
 
 def render_contact_section():
